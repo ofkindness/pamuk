@@ -1,11 +1,17 @@
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { readingTime, renderMarkdown } from '../src/lib/markdown/render.ts';
 
 const fixtures = path.join(import.meta.dirname, 'fixtures');
 const beside = (src: string) => (src.startsWith('http') ? undefined : path.join(fixtures, src));
 
 describe('renderMarkdown', () => {
+	// The first render starts Shiki, which can take seconds on a busy machine.
+	// Paying for it here keeps that time out of the first test's own limit.
+	beforeAll(async () => {
+		await renderMarkdown('```ts\nconst warm = true;\n```');
+	}, 60_000);
+
 	it('renders GitHub Flavored Markdown', async () => {
 		const { html } = await renderMarkdown('~~old~~ **new**\n\n| a | b |\n|---|---|\n| 1 | 2 |');
 		expect(html).toContain('<del>old</del>');

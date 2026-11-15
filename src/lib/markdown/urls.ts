@@ -28,3 +28,13 @@ export function absolutize(html: string, siteUrl: string, pageUrl: string): stri
 		}
 	});
 }
+
+/**
+ * Where a file named in frontmatter (a share image, a book cover, an avatar)
+ * is served: a full URL stays as it is, `/x.png` is a file under `static/`,
+ * and anything else sits beside the document at `pagePath`.
+ */
+export function filePath(src: string, pagePath: string): string {
+	if (/^https?:\/\//.test(src) || src.startsWith('/')) return src;
+	return pagePath + src;
+}

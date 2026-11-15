@@ -1,4 +1,5 @@
 import site from '#site/site.config.ts';
+import { filePath } from './markdown/urls.ts';
 import { resolve } from '$app/paths';
 
 /** The base path the site is served from: `''` or `/subfolder`. */
@@ -15,3 +16,14 @@ export function absolute(path: string): string {
 }
 
 export const postPath = (slug: string) => `/posts/${slug}/`;
+export const tagPath = (slug: string) => `/tags/${slug}/`;
+export const categoryPath = (slug: string) => `/categories/${slug}/`;
+export const authorPath = (slug: string) => `/authors/${slug}/`;
+
+export { filePath };
+
+/** Like `absolute`, but leaves full URLs alone. */
+export function absoluteFile(src: string, pagePath: string): string {
+	const path = filePath(src, pagePath);
+	return path.startsWith('/') ? absolute(path) : path;
+}

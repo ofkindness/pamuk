@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [24, 26]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Types and content
+        run: npm run check
+
+      - name: Tests
+        run: npm test
+
+      # A broken internal link or a missing image fails the build.
+      - name: Build every site
+        run: |
+          for site in sites/*/; do
+            SITE="$(basename "$site")" npm run build
+          done
+
+      - name: Build the default site in a subfolder
+        run: npm run build
+        env:
+          BASE_PATH: /pamuk

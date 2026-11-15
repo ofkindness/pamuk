@@ -12,6 +12,9 @@ export default defineSite({
 		{ slug: 'books', name: 'Books' }
 	],
 	tags: [],
-	nav: [{ title: 'Archive', href: '/archive/' }],
+	nav: [
+		{ title: 'Archive', href: '/archive/' },
+		{ title: 'Search', href: '/search/' }
+	],
 	analytics: { provider: 'none' }
 });

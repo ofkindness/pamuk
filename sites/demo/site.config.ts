@@ -19,7 +19,8 @@ export default defineSite({
 	],
 	nav: [
 		{ title: 'Archive', href: '/archive/' },
-		{ title: 'About', href: '/about/' }
+		{ title: 'About', href: '/about/' },
+		{ title: 'Search', href: '/search/' }
 	],
 	analytics: { provider: 'none' } // or { provider: 'goatcounter', endpoint: 'https://stats.example.com/count' }
 });
