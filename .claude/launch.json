@@ -6,6 +6,19 @@
 			"runtimeExecutable": "npm",
 			"runtimeArgs": ["run", "dev", "--", "--port", "5183", "--strictPort"],
 			"port": 5183
+		},
+		{
+			"name": "pamuk-preview",
+			"runtimeExecutable": "npm",
+			"runtimeArgs": ["run", "preview"],
+			"port": 4173
+		},
+		{
+			"name": "pamuk-preview-subfolder",
+			"runtimeExecutable": "env",
+			"runtimeArgs": ["BASE_PATH=/pamuk", "PORT=4174", "node", "scripts/preview.ts"],
+			"port": 4174,
+			"url": "http://localhost:4174"
 		}
 	]
 }

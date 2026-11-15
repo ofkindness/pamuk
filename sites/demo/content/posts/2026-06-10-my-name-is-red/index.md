@@ -8,6 +8,7 @@ book:
   title: "My Name Is Red"
   authors: ["Orhan Pamuk"]
   year: 1998
+  cover: cover.svg
   rating: 5
 ---
 

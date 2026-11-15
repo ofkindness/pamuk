@@ -1,4 +1,4 @@
-import type { BlogPosting, BreadcrumbList, Person, Thing, WebSite, WithContext } from 'schema-dts';
+import type { BlogPosting, Book, BreadcrumbList, Person, ProfilePage, Review, Thing, WebSite, WithContext } from 'schema-dts';
 
 /** Serializes structured data as a `<script>` element that cannot be broken out of. */
 export function jsonLdScript(data: WithContext<Thing>): string {
@@ -64,5 +64,56 @@ export function breadcrumbLd(items: { name: string; url: string }[]): WithContex
 			name: item.name,
 			item: item.url
 		}))
+	};
+}
+
+export interface BookInput {
+	title: string;
+	authors: string[];
+	year?: number;
+	isbn?: string;
+	cover?: string;
+	rating?: number;
+}
+
+export function bookLd(book: BookInput): Book {
+	return {
+		'@type': 'Book',
+		name: book.title,
+		author: book.authors.map((name) => ({ '@type': 'Person', name })),
+		...(book.year && { datePublished: String(book.year) }),
+		...(book.isbn && { isbn: book.isbn }),
+		...(book.cover && { image: book.cover })
+	};
+}
+
+/**
+ * A post about a book. Without a rating it stays a `BlogPosting` that is
+ * `about` the book; with one it is a `Review` of the book.
+ */
+export function bookPostLd(post: PostingInput, book: BookInput): WithContext<BlogPosting> | WithContext<Review> {
+	const posting = blogPostingLd(post);
+	if (!book.rating) return { ...posting, about: bookLd(book) };
+	const { '@type': _, ...shared } = posting;
+	return {
+		...shared,
+		'@type': 'Review',
+		itemReviewed: bookLd(book),
+		reviewRating: { '@type': 'Rating', ratingValue: book.rating, bestRating: 5, worstRating: 1 }
+	};
+}
+
+export function profilePageLd(author: { name: string; links: string[]; url: string; image?: string }): WithContext<ProfilePage> {
+	return {
+		'@context': 'https://schema.org',
+		'@type': 'ProfilePage',
+		url: author.url,
+		mainEntity: {
+			'@type': 'Person',
+			name: author.name,
+			url: author.url,
+			...(author.links.length > 0 && { sameAs: author.links }),
+			...(author.image && { image: author.image })
+		}
 	};
 }
