@@ -1,0 +1,21 @@
+/*
+ * The site's look: fonts and colors as Tailwind theme tokens.
+ * Colors use light-dark(), so each token carries its light and dark value
+ * and the page follows the reader's system setting.
+ */
+@theme {
+	--font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+	--font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+	--font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+	/* Page background and raised surfaces (code, callouts). */
+	--color-paper: light-dark(#fbfaf6, #17171a);
+	--color-surface: light-dark(#f3f0e7, #212126);
+	/* Text: main and secondary. */
+	--color-ink: light-dark(#23211d, #e7e4dc);
+	--color-muted: light-dark(#6d675d, #9d988d);
+	/* Rules and borders. */
+	--color-line: light-dark(#e4dfd3, #303036);
+	/* Links and highlights. */
+	--color-accent: light-dark(#a23b22, #ec9477);
+}

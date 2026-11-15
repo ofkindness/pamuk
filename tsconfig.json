@@ -1,0 +1,7 @@
+{
+	"extends": "$app/tsconfig",
+	"compilerOptions": {
+		"strict": true
+	},
+	"include": ["src", "sites", "scripts", "tests", "vite.config.ts", "vitest.config.ts", "content-collections.ts"]
+}

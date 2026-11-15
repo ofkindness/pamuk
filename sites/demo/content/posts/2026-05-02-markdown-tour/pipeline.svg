@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="200" viewBox="0 0 720 200" role="img" aria-label="Markdown files go through the build and become static HTML">
+	<style>
+		.box { fill: #f3f0e7; stroke: #a23b22; stroke-width: 2; }
+		.label { font: 600 18px ui-sans-serif, system-ui, sans-serif; fill: #23211d; text-anchor: middle; }
+		.note { font: 14px ui-sans-serif, system-ui, sans-serif; fill: #6d675d; text-anchor: middle; }
+		.arrow { stroke: #a23b22; stroke-width: 2; fill: none; marker-end: url(#head); }
+	</style>
+	<defs>
+		<marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+			<path d="M0 0L10 5L0 10z" fill="#a23b22" />
+		</marker>
+	</defs>
+	<rect width="720" height="200" fill="#fbfaf6" />
+	<rect class="box" x="30" y="60" width="180" height="80" rx="8" />
+	<text class="label" x="120" y="96">Markdown</text>
+	<text class="note" x="120" y="120">posts, pages, authors</text>
+	<path class="arrow" d="M210 100H265" />
+	<rect class="box" x="270" y="60" width="180" height="80" rx="8" />
+	<text class="label" x="360" y="96">Build</text>
+	<text class="note" x="360" y="120">validate, render</text>
+	<path class="arrow" d="M450 100H505" />
+	<rect class="box" x="510" y="60" width="180" height="80" rx="8" />
+	<text class="label" x="600" y="96">Static HTML</text>
+	<text class="note" x="600" y="120">any web server</text>
+</svg>

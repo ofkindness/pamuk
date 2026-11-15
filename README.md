@@ -7,9 +7,9 @@ with structured data for search engines. Readers get plain HTML and CSS; the onl
 client-side JavaScript is three small optional scripts (copy buttons, search,
 analytics).
 
-> **Status:** proposal. The design below is planned, not implemented.
-> See [Milestones](#milestones) for the order of work and
-> [Open decisions](#open-decisions) for what is still undecided.
+> **Status:** M0 is implemented, except that the blog has no posts and is not
+> deployed yet. M1 and M2 are planned. See [Milestones](#milestones) for the
+> order of work and [Open decisions](#open-decisions) for what is still undecided.
 
 pamuk is two things in one repository:
 
@@ -44,12 +44,14 @@ to finish an earlier one.
 
 ### M0: a readable blog, live
 
-Spikes first, because the rest depends on them:
+Three spikes came first, because the rest depends on them. All three worked:
 
 1. A prerendered `404.html` that works with `csr = false` (the adapter's
-   `fallback` page is a client-rendered shell, so it cannot be used).
+   `fallback` page is a client-rendered shell, so it cannot be used). It is
+   the route `src/routes/404.html` with `trailingSlash = 'never'`.
 2. content-collections with the `SITE` switch: types, hot reload in dev.
-3. Post folders with co-located images, published next to the post.
+3. Post folders with co-located images, published next to the post by a
+   prerendered endpoint.
 
 Then:
 
@@ -129,13 +131,14 @@ with `script-src 'self'` (plus the analytics host).
 
     .
     ├── src/
-    │   ├── routes/            # pages, RSS, sitemap
+    │   ├── routes/            # pages, RSS, sitemap, the 404 page
     │   ├── lib/               # components, SEO, Markdown pipeline, content loader (#lib)
-    │   │   └── scripts/       # the only client-side JS (see JavaScript policy)
+    │   │   └── scripts/       # the only client-side JS (M1, see JavaScript policy)
+    │   ├── hooks.server.ts    # sets <html lang> per page
     │   └── app.css            # Tailwind entry; imports the site's theme.css
     ├── sites/
     │   ├── demo/              # the starter's example site (MIT)
-    │   │   ├── site.config.ts # URL, title, language, tags, categories, nav, analytics
+    │   │   ├── site.config.ts # URL, title, description, language, tags, categories, nav, analytics
     │   │   ├── theme.css      # fonts and colors as Tailwind theme tokens
     │   │   ├── content/
     │   │   │   ├── posts/     # <slug>.md, or <slug>/index.md with its images
@@ -145,15 +148,20 @@ with `script-src 'self'` (plus the analytics host).
     │   │   └── static/        # favicon, default OG image
     │   └── blog.sapere-aude.ru/   # the author's blog, same shape
     │       └── LICENSE            # all rights reserved (not MIT)
-    ├── deploy/
+    ├── deploy/                # planned
     │   ├── xenia.conf.js      # example web server config
-    │   └── README.md          # Nginx and Caddy equivalents
+    │   └── README.md          # Nginx and Caddy equivalents (M1)
     ├── scripts/
+    │   ├── site.ts            # which site is selected
     │   ├── prepare-site.ts    # links static/ → sites/$SITE/static (git-ignored)
-    │   └── init.ts            # npm run init
-    ├── tests/
+    │   ├── content-plugin.ts  # runs content-collections in Vite; content errors fail the build
+    │   ├── check-content.ts   # validates content without building (part of npm run check)
+    │   ├── finish-build.ts    # removes the unused client bundle from build/
+    │   └── init.ts            # npm run init (M1)
+    ├── tests/                 # Vitest: Markdown pipeline, schemas, validation, SEO helpers
     ├── content-collections.ts
     ├── vite.config.ts         # SvelteKit config; SITE selects the site
+    ├── vitest.config.ts
     ├── LICENSE                # MIT, covers the code and sites/demo
     └── package.json
 
@@ -165,9 +173,9 @@ the site named in `package.json` (`pamuk.defaultSite`, initially `demo`) is used
 - `#site` resolves to `sites/$SITE` (Vite `resolve.alias`; tsconfig maps it to
   `sites/demo` for types, since all sites share one shape)
 - content collections read from `sites/$SITE/content/**`
-- `scripts/prepare-site.ts` points `static/` at `sites/$SITE/static` before dev
-  and build (a symlink, so nothing goes stale when you switch sites; a copy on
-  systems without symlinks)
+- `scripts/prepare-site.ts` points `static/` at `sites/$SITE/static` (a
+  symlink, so nothing goes stale when you switch sites; a copy on systems
+  without symlinks). `vite.config.ts` calls it, so every Vite command does it.
 
 Assets shared by every site (scripts, icons) live in `src/lib` and go through
 Vite, not through `static/`.
@@ -280,16 +288,23 @@ Directives render as styled callouts.
 ```ts
 // sites/demo/site.config.ts
 export default defineSite({
-  url: "https://example.com",
+  url: "https://example.com",       // public URL of the home page
   title: "pamuk demo",
+  description: "A static blog starter built with SvelteKit and typed Markdown content.",
   language: "en",
   defaultAuthor: "jane",
-  postsPerPage: 20,
+  homePosts: 10,                    // posts on the home page
+  postsPerPage: 20,                 // listing page size, once pagination exists (M2)
   categories: [{ slug: "tech", name: "Tech" }, { slug: "books", name: "Books" }],
   tags: [{ slug: "svelte", name: "Svelte" }],
+  nav: [{ title: "Archive", href: "/archive/" }, { title: "About", href: "/about/" }],
   analytics: { provider: "none" },  // or { provider: "goatcounter", endpoint: "https://stats.example.com/count" }
 })
 ```
+
+A site's `static/favicon.svg` and `static/og-default.png` are picked up when
+they exist: the first as the icon, the second as the share image of pages
+that have none of their own.
 
 ## Routes
 
@@ -326,12 +341,16 @@ npm run dev                            # default site
 SITE=blog.sapere-aude.ru npm run dev   # another site
 npm run check                          # svelte-check + content validation
 npm test                               # Markdown pipeline and schema tests
-npm run build                          # → build/ (then Pagefind indexes it)
+npm run build                          # → build/ (Pagefind will index it from M1)
 npm run preview
 ```
 
-The search page needs a built index, so it works in `npm run preview`, not in
-`npm run dev`.
+In dev, pages render on the client too, so edits to components and content
+hot-reload; `npm run build` turns client rendering off and removes the unused
+client bundle from `build/`.
+
+The search page (M1) needs a built index, so it will work in `npm run preview`,
+not in `npm run dev`.
 
 ## Use it as a starter
 
