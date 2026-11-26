@@ -4,6 +4,7 @@ import path from 'node:path';
 import { root, siteDir } from './scripts/site.ts';
 import { parsePostPath } from './src/lib/content/files.ts';
 import { authorSchema, pageSchema, postSchema } from './src/lib/content/schema.ts';
+import { measureImage } from './src/lib/markdown/images.ts';
 import { readingTime, renderMarkdown } from './src/lib/markdown/render.ts';
 
 const site = siteDir();
@@ -24,6 +25,15 @@ function imageResolver(documentDir?: string) {
 	};
 }
 
+/** Size of a local image named in frontmatter; fails the build when the file is missing. */
+function frontmatterImage(src: string | undefined, documentDir?: string) {
+	if (!src) return undefined;
+	const filePath = imageResolver(documentDir)(src);
+	if (!filePath) return undefined;
+	const { width, height } = measureImage(filePath, src);
+	return width && height ? { width, height } : undefined;
+}
+
 const posts = defineCollection({
 	name: 'posts',
 	directory: collectionDir,
@@ -33,6 +43,8 @@ const posts = defineCollection({
 		const file = parsePostPath(_meta.filePath);
 		const directory = file.directory ? path.join(contentDir, file.directory) : undefined;
 		const rendered = await renderMarkdown(content, imageResolver(directory));
+		frontmatterImage(data.image, directory);
+		const coverSize = frontmatterImage(data.book?.cover, directory);
 		// Everything beside index.md is published next to the post.
 		const assets = directory
 			? readdirSync(directory, { withFileTypes: true })
@@ -48,6 +60,8 @@ const posts = defineCollection({
 			source: _meta.filePath,
 			directory: file.directory,
 			assets,
+			coverSize,
+			hasCode: rendered.html.includes('<pre'),
 			html: rendered.html,
 			headings: rendered.headings,
 			readingTime: readingTime(rendered.words)
@@ -63,6 +77,7 @@ const authors = defineCollection({
 	transform: async ({ content, _meta, ...data }) => ({
 		...data,
 		slug: path.basename(_meta.filePath, '.md'),
+		avatarSize: frontmatterImage(data.avatar),
 		html: (await renderMarkdown(content, imageResolver())).html
 	})
 });

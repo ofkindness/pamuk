@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { formatDate, rssDate } from '../src/lib/dates.ts';
-import { blogPostingLd, breadcrumbLd, jsonLdScript } from '../src/lib/seo/jsonld.ts';
+import { blogPostingLd, bookPostLd, breadcrumbLd, jsonLdScript, profilePageLd } from '../src/lib/seo/jsonld.ts';
 import { cdata, escapeXml } from '../src/lib/seo/xml.ts';
 
 describe('jsonLdScript', () => {
@@ -34,6 +34,53 @@ describe('blogPostingLd', () => {
 		expect(posting).toMatchObject({ discussionUrl: 'https://forum.example.com/t/1' });
 		expect(posting).not.toHaveProperty('image');
 		expect(posting.author).toEqual({ '@type': 'Person', name: 'Jane Doe' });
+	});
+});
+
+describe('bookPostLd', () => {
+	const post = {
+		url: 'https://example.com/posts/red/',
+		title: 'Reading My Name Is Red',
+		description: 'Notes',
+		date: '2026-06-10',
+		language: 'en',
+		author: { name: 'Jane Doe', links: [] }
+	};
+	const book = { title: 'My Name Is Red', authors: ['Orhan Pamuk'], year: 1998 };
+
+	it('stays a blog posting about the book when there is no rating', () => {
+		const data = bookPostLd(post, book);
+		expect(data).toMatchObject({
+			'@type': 'BlogPosting',
+			about: { '@type': 'Book', name: 'My Name Is Red', datePublished: '1998' }
+		});
+		expect(data).not.toHaveProperty('reviewRating');
+	});
+
+	it('becomes a review of the book when there is a rating', () => {
+		const data = bookPostLd(post, { ...book, rating: 4 });
+		expect(data).toMatchObject({
+			'@type': 'Review',
+			headline: 'Reading My Name Is Red',
+			itemReviewed: { '@type': 'Book', author: [{ '@type': 'Person', name: 'Orhan Pamuk' }] },
+			reviewRating: { ratingValue: 4, bestRating: 5, worstRating: 1 }
+		});
+		expect(data).not.toHaveProperty('about');
+	});
+});
+
+describe('profilePageLd', () => {
+	it('describes the author as the main entity', () => {
+		const data = profilePageLd({
+			name: 'Jane Doe',
+			links: ['https://example.org/jane'],
+			url: 'https://example.com/authors/jane/'
+		});
+		expect(data).toMatchObject({
+			'@type': 'ProfilePage',
+			mainEntity: { '@type': 'Person', name: 'Jane Doe', sameAs: ['https://example.org/jane'] }
+		});
+		expect(data.mainEntity).not.toHaveProperty('image');
 	});
 });
 

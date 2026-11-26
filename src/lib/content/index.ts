@@ -31,6 +31,18 @@ export function authorOf(post: Post): Author {
 	return authors.find((author) => author.slug === slug)!;
 }
 
+export function getAuthor(slug: string): Author | undefined {
+	return authors.find((author) => author.slug === slug);
+}
+
+export const postsByTag = (slug: string) => posts.filter((post) => post.tags.includes(slug));
+export const postsByCategory = (slug: string) => posts.filter((post) => post.category === slug);
+export const postsByAuthor = (slug: string) => posts.filter((post) => authorOf(post).slug === slug);
+
+/** Declared tags and categories that at least one post uses; only these get a page. */
+export const usedTags = site.tags.filter((tag) => postsByTag(tag.slug).length > 0);
+export const usedCategories = site.categories.filter((category) => postsByCategory(category.slug).length > 0);
+
 /** The fields a listing needs, without the rendered HTML. */
 export function summary(post: Post) {
 	const { slug, title, description, date, draft, lang } = post;

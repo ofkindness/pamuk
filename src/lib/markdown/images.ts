@@ -13,6 +13,18 @@ declare module 'vfile' {
 	}
 }
 
+/** Reads a local image's size. Throws when the file is missing, so the build fails. */
+export function measureImage(filePath: string, src: string): { width?: number; height?: number } {
+	let bytes: Uint8Array;
+	try {
+		bytes = readFileSync(filePath);
+	} catch {
+		throw new Error(`image not found: ${src} (looked for ${filePath})`);
+	}
+	const { width, height } = imageSize(bytes);
+	return { width, height };
+}
+
 /**
  * Makes images lazy and gives local ones their `width` and `height`, so the
  * page does not jump while they load. A local image that is missing on disk
@@ -31,14 +43,8 @@ export function rehypeImages() {
 			const filePath = resolve(src);
 			if (!filePath) return;
 
-			let bytes: Uint8Array;
-			try {
-				bytes = readFileSync(filePath);
-			} catch {
-				throw new Error(`image not found: ${src} (looked for ${filePath})`);
-			}
+			const { width, height } = measureImage(filePath, src);
 			if (node.properties.width || node.properties.height) return;
-			const { width, height } = imageSize(bytes);
 			if (width && height) {
 				node.properties.width = width;
 				node.properties.height = height;

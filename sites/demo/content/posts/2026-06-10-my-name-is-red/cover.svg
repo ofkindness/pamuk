@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450" viewBox="0 0 300 450" role="img" aria-label="A plain red placeholder cover">
+	<rect width="300" height="450" fill="#a23b22" />
+	<rect x="18" y="18" width="264" height="414" fill="none" stroke="#fbfaf6" stroke-width="2" />
+	<circle cx="150" cy="170" r="46" fill="none" stroke="#fbfaf6" stroke-width="2" />
+	<circle cx="150" cy="170" r="6" fill="#fbfaf6" />
+	<text x="150" y="300" fill="#fbfaf6" text-anchor="middle" font-family="Georgia, serif" font-size="26">My Name</text>
+	<text x="150" y="334" fill="#fbfaf6" text-anchor="middle" font-family="Georgia, serif" font-size="26">Is Red</text>
+	<text x="150" y="392" fill="#fbfaf6" text-anchor="middle" font-family="Georgia, serif" font-size="14" letter-spacing="2">PLACEHOLDER COVER</text>
+</svg>

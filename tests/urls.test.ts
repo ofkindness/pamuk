@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { absolutize, withBase } from '../src/lib/markdown/urls.ts';
+import { absolutize, filePath, withBase } from '../src/lib/markdown/urls.ts';
 
 const html =
 	'<a href="/archive/">a</a> <a href="#part">b</a> <a href="https://example.org/x">c</a> ' +
@@ -36,5 +36,16 @@ describe('absolutize', () => {
 
 	it('keeps absolute URLs', () => {
 		expect(result).toContain('href="https://example.org/x"');
+	});
+});
+
+describe('filePath', () => {
+	it('puts a bare file name beside its page', () => {
+		expect(filePath('cover.svg', '/posts/red/')).toBe('/posts/red/cover.svg');
+	});
+
+	it('keeps static paths and full URLs', () => {
+		expect(filePath('/images/cover.png', '/posts/red/')).toBe('/images/cover.png');
+		expect(filePath('https://example.org/c.png', '/posts/red/')).toBe('https://example.org/c.png');
 	});
 });

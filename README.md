@@ -7,9 +7,11 @@ with structured data for search engines. Readers get plain HTML and CSS; the onl
 client-side JavaScript is three small optional scripts (copy buttons, search,
 analytics).
 
-> **Status:** M0 is implemented, except that the blog has no posts and is not
-> deployed yet. M1 and M2 are planned. See [Milestones](#milestones) for the
-> order of work and [Open decisions](#open-decisions) for what is still undecided.
+> **Status:** M0 and most of M1 are implemented. Still open: the blog has no
+> posts and is not deployed, the demo is not on GitHub Pages yet, and the web
+> server configs are not written. M2 is planned. See [Milestones](#milestones)
+> for the order of work and [Open decisions](#open-decisions) for what is
+> still undecided.
 
 pamuk is two things in one repository:
 
@@ -74,16 +76,23 @@ pages contain no executable `<script>`.
 
 ### M1: a starter other people can use
 
+Done:
+
 - Tags and categories declared in each site's config, with listing pages
 - Author pages
 - Book posts: optional `book` frontmatter renders a book card and adds JSON-LD
 - Search page (Pagefind)
 - Copy buttons on code blocks
-- Base-path support, with the demo on GitHub Pages under `/pamuk` as its test
+- Base-path support, tested by a subfolder build in CI
 - `npm run init`
-- CI: check, tests, a demo build under the base path
-- Nginx and Caddy equivalents of the xenia config
-- The repository becomes public
+- `npm run preview`: a static server over `build/`, like a real host
+- CI: check, tests, a build of every site, a build under the base path
+- The repository is public
+
+To do:
+
+- Deploy the demo to GitHub Pages under `/pamuk`
+- The xenia config, with Nginx and Caddy equivalents
 
 **Done when:** the demo at ofkindness.github.io/pamuk builds with no broken
 internal links; a fresh clone followed by `npm run init -- my-blog` builds.
@@ -114,14 +123,19 @@ internal links; a fresh clone followed by `npm run init -- my-blog` builds.
 ## JavaScript policy
 
 The root layout sets `csr = false`, so SvelteKit ships no JavaScript at all.
-The exceptions are plain scripts in `src/lib/scripts/`, loaded with
-`<script defer>` only on the pages that need them:
+The exceptions are plain scripts in `src/lib/scripts/`. They are shipped as
+written, as separate files, and loaded with `<script type="module">` (which
+defers them) only on the pages that need them:
 
-| Script       | Loaded on                         | Milestone |
-|--------------|-----------------------------------|-----------|
-| copy buttons | posts that contain a code block   | M1        |
-| search       | `/search/` only                   | M1        |
-| analytics    | every page, if the site enables it| M2        |
+| Script       | File           | Loaded on                          | Milestone |
+|--------------|----------------|------------------------------------|-----------|
+| copy buttons | `copy-code.js` | posts that contain a code block    | M1, done  |
+| search       | `search.js`    | `/search/` only                    | M1, done  |
+| analytics    |                | every page, if the site enables it | M2        |
+
+Search indexes posts and pages only. Pagefind keeps one index per language,
+so on a site that mixes languages, a search finds the posts written in the
+site's own language.
 
 There is no theme toggle: dark mode follows `prefers-color-scheme`. There are
 no inline executable scripts, so a server can send a `Content-Security-Policy`
@@ -133,7 +147,7 @@ with `script-src 'self'` (plus the analytics host).
     ├── src/
     │   ├── routes/            # pages, RSS, sitemap, the 404 page
     │   ├── lib/               # components, SEO, Markdown pipeline, content loader (#lib)
-    │   │   └── scripts/       # the only client-side JS (M1, see JavaScript policy)
+    │   │   └── scripts/       # the only client-side JS (see JavaScript policy)
     │   ├── hooks.server.ts    # sets <html lang> per page
     │   └── app.css            # Tailwind entry; imports the site's theme.css
     ├── sites/
@@ -148,6 +162,7 @@ with `script-src 'self'` (plus the analytics host).
     │   │   └── static/        # favicon, default OG image
     │   └── blog.sapere-aude.ru/   # the author's blog, same shape
     │       └── LICENSE            # all rights reserved (not MIT)
+    ├── .github/workflows/     # CI
     ├── deploy/                # planned
     │   ├── xenia.conf.js      # example web server config
     │   └── README.md          # Nginx and Caddy equivalents (M1)
@@ -157,7 +172,8 @@ with `script-src 'self'` (plus the analytics host).
     │   ├── content-plugin.ts  # runs content-collections in Vite; content errors fail the build
     │   ├── check-content.ts   # validates content without building (part of npm run check)
     │   ├── finish-build.ts    # removes the unused client bundle from build/
-    │   └── init.ts            # npm run init (M1)
+    │   ├── preview.ts         # npm run preview: serves build/ like a static host
+    │   └── init.ts            # npm run init
     ├── tests/                 # Vitest: Markdown pipeline, schemas, validation, SEO helpers
     ├── content-collections.ts
     ├── vite.config.ts         # SvelteKit config; SITE selects the site
@@ -341,16 +357,17 @@ npm run dev                            # default site
 SITE=blog.sapere-aude.ru npm run dev   # another site
 npm run check                          # svelte-check + content validation
 npm test                               # Markdown pipeline and schema tests
-npm run build                          # → build/ (Pagefind will index it from M1)
-npm run preview
+npm run build                          # → build/, then Pagefind indexes it
+npm run preview                        # serves build/ at http://localhost:4173
 ```
 
 In dev, pages render on the client too, so edits to components and content
 hot-reload; `npm run build` turns client rendering off and removes the unused
 client bundle from `build/`.
 
-The search page (M1) needs a built index, so it will work in `npm run preview`,
-not in `npm run dev`.
+The search page needs a built index, so it works in `npm run preview`, not in
+`npm run dev`. The preview serves `build/` the way a static host does,
+`404.html` included; `BASE_PATH` and `PORT` change where.
 
 ## Use it as a starter
 
@@ -391,12 +408,15 @@ repository.
 
 ### CI
 
-CI starts when the repository becomes public (M1).
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`,
+on Node 24 and 26: `npm run check`, `npm test`, a build of every site under
+`sites/`, and a build of the default site under `/pamuk`.
 
-- Every push: `npm run check`, `npm test`, a demo build under `/pamuk`.
+Planned, with path filters so that a new post never rebuilds the demo:
+
 - The demo is deployed when `src/` or `sites/demo/` changes.
 - The blog is built and deployed when `src/` or `sites/blog.sapere-aude.ru/`
-  changes, so a new post never rebuilds the demo.
+  changes.
 
 Dependencies are pinned by the lockfile and updated in grouped batches.
 

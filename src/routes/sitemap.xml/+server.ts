@@ -1,6 +1,6 @@
-import { pages, posts } from '#lib/content/index.ts';
+import { authors, pages, posts, usedCategories, usedTags } from '#lib/content/index.ts';
 import { escapeXml } from '#lib/seo/xml.ts';
-import { absolute, postPath } from '#lib/urls.ts';
+import { absolute, authorPath, categoryPath, postPath, tagPath } from '#lib/urls.ts';
 
 export const prerender = true;
 
@@ -10,7 +10,10 @@ export function GET() {
 		{ path: '/', lastmod: published[0]?.date },
 		{ path: '/archive/', lastmod: published[0]?.date },
 		...published.map((post) => ({ path: postPath(post.slug), lastmod: post.updated ?? post.date })),
-		...pages.map((page) => ({ path: `/${page.slug}/` }))
+		...pages.map((page) => ({ path: `/${page.slug}/` })),
+		...usedCategories.map((category) => ({ path: categoryPath(category.slug) })),
+		...usedTags.map((tag) => ({ path: tagPath(tag.slug) })),
+		...authors.map((author) => ({ path: authorPath(author.slug) }))
 	];
 
 	const xml = `<?xml version="1.0" encoding="UTF-8"?>
